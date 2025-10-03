@@ -78,28 +78,21 @@ export class SettingsManager {
     this.pendingWrite = setTimeout(() => {
       this.pendingWrite = null;
       const config = vscode.workspace.getConfiguration();
-      const currentSettings = config.get<Record<string, string>>(CONFIG_KEY) || {};
-      const effective: ColorsMap = { ...currentSettings };
+      // Only include keys that are set in baseColors or tempHighlights
+      const effective: ColorsMap = {};
 
       // Apply persistent colors
       Object.entries(this.baseColors).forEach(([k, v]) => {
-        if (v === undefined) delete effective[k];
-        else effective[k] = v;
+        if (v !== undefined) effective[k] = v;
       });
 
-      // Apply temporary highlights
+      // Apply temporary highlights (overrides persistent)
       Object.entries(this.tempHighlights).forEach(([k, v]) => {
         effective[k] = v;
       });
 
-      // Clean undefined values
-      const cleaned: Record<string, string> = {};
-      Object.entries(effective).forEach(([k, v]) => {
-        if (v !== undefined) cleaned[k] = v;
-      });
-
       this.lastWritePromise = this.lastWritePromise
-        .then(() => config.update(CONFIG_KEY, cleaned, this.toVscodeConfigTarget(this.configTarget)))
+        .then(() => config.update(CONFIG_KEY, effective, this.toVscodeConfigTarget(this.configTarget)))
         .catch((err) => console.error('Failed to update:', err));
     }, 10);
   }
