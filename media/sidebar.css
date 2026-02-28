@@ -5,10 +5,12 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0;
 }
 
+/* Base layout and theme-aware colors */
 body {
-  font-family: system-ui, sans-serif;
-  color: #ddd;
-  background: #1e1e1e;
+  font-family: var(--vscode-font-family, system-ui), var(--vscode-font-family);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--vscode-sideBar-foreground);
+  background-color: var(--vscode-sideBar-background);
   padding: 16px;
   margin: 0;
 }
@@ -21,32 +23,32 @@ body {
 }
 
 .button-group .config-btn {
-  background: #2a2a2a;
-  color: #ddd;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--vscode-button-border-radius, 4px);
   padding: 8px 16px;
-  font-size: 1em;
+  font-size: var(--vscode-font-size, 13px);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   min-width: 60px;
   max-width: 100%;
   outline: none;
 }
 
 .button-group .config-btn.active {
-  background: linear-gradient(90deg, #0078d4 0%, #005fa3 100%);
-  color: #fff;
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
   font-weight: bold;
 }
 
 .button-group .config-btn:hover:not(:disabled) {
-  background: linear-gradient(90deg, #007fe0 0%, #006cb9 100%);
+  background-color: var(--vscode-button-hoverBackground);
 }
 
 .button-group .config-btn:disabled {
-  background: #444;
-  color: #888;
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-foreground);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -59,17 +61,17 @@ body {
 /* Expandable element group */
 .element-group {
   border-radius: 8px;
-  background: #232323;
+  background-color: var(--vscode-sideBar-background);
   margin-bottom: 12px;
-  box-shadow: 0 1px 4px 0 #0002;
-  border: 1px solid #292929;
+  box-shadow: 0 1px 4px 0 var(--vscode-editorWidget-shadow, #0002);
+  border: 1px solid var(--vscode-editorWidget-border);
   overflow: hidden;
   transition: box-shadow 0.2s;
 }
 
 .element-group:focus-within, .element-group:hover {
-  box-shadow: 0 2px 8px 0 #0078d455;
-  border-color: #0078d4;
+  box-shadow: 0 2x 8px 0 var(--vscode-focusBorder);
+  border-color: var(--vscode-focusBorder);
 }
 
 .element-header {
@@ -77,33 +79,31 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  background: #232323;
   cursor: pointer;
   font-size: 1.08em;
   font-weight: 500;
-  color: #fff;
+  color: var(--vscode-sideBar-foreground);
   border: none;
   outline: none;
   user-select: none;
-  transition: background 0.2s, color 0.2s;
+  transition: color 0.2s;
 }
 
 .element-header:focus, .element-header:hover {
-  background: #262e3a;
-  color: #7ecfff;
+  color: var(--vscode-list-hoverForeground);
 }
 
 .expand-icon {
   font-size: 1.1em;
   margin-left: 8px;
-  color: #7ecfff;
+  color: var(--vscode-list-hoverForeground);
   transition: transform 0.2s;
 }
 
 .element-settings {
-  background: #20232a;
+  background-color: var(--vscode-sideBar-background);
   padding: 8px 18px 12px 18px;
-  border-top: 1px solid #292929;
+  border-top: 1px solid var(--vscode-editorWidget-border);
   animation: fadeIn 0.2s;
 }
 
@@ -117,7 +117,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 7px 0;
-  border-bottom: 1px solid #232323;
+  border-bottom: 1px solid var(--vscode-editorWidget-border);
   font-size: 0.98em;
   cursor: pointer;
 }
@@ -127,23 +127,23 @@ body {
 }
 
 .setting-item span {
-  color: #b7cfff;
+  color: var(--vscode-sideBar-foreground);
 }
 
 .picker, .number-input, .string-input {
   margin-left: 10px;
   min-width: 40px;
   border-radius: 4px;
-  border: 1px solid #333;
-  background: #181a1f;
-  color: #fff;
+  border: 1px solid var(--vscode-editorWidget-border);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
   padding: 2px 6px;
-  font-size: 1em;
+  font-size: var(--vscode-font-size, 13px);
   transition: border 0.2s;
 }
 
 .picker:focus, .number-input:focus, .string-input:focus {
-  border-color: #0078d4;
+  border-color: var(--vscode-focusBorder);
   outline: none;
 }
 
@@ -153,7 +153,7 @@ body {
   justify-content: space-between;
   padding: 10px 16px;
   margin: 0;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--vscode-editorWidget-border);
   background: transparent;
   cursor: pointer;
   transition: background 0.2s;
@@ -164,7 +164,7 @@ body {
 }
 
 .item:hover {
-  background: #2a2a2a;
+  background: var(--vscode-list-hoverBackground);
 }
 
 .picker {

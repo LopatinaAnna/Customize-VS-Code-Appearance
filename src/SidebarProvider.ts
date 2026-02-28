@@ -17,6 +17,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       webviewView.webview.options = { enableScripts: true };
       webviewView.webview.html = await this.getHtml(webviewView.webview, ELEMENTS);
 
+      // send current color theme and update on change
+      const postTheme = (kind: vscode.ColorThemeKind) => {
+        const themeClass = kind === vscode.ColorThemeKind.Dark ? 'vscode-dark'
+                          : kind === vscode.ColorThemeKind.Light ? 'vscode-light'
+                          : 'vscode-high-contrast';
+        webviewView.webview.postMessage({ type: 'setTheme', theme: themeClass });
+      };
+      postTheme(vscode.window.activeColorTheme.kind);
+      vscode.window.onDidChangeActiveColorTheme(e => postTheme(e.kind));
+
       const sendState = () => {
         const workspaceAvailable = !!vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0;
         if (workspaceAvailable && SettingsManager.getConfigTarget() === 'Global') {

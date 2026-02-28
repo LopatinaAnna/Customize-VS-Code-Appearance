@@ -1,6 +1,14 @@
 (() => {
   const vscode = acquireVsCodeApi();
 
+  // apply a theme class to <body> (light, dark, high-contrast)
+  function setThemeClass(themeClass) {
+    document.body.classList.remove('vscode-light', 'vscode-dark', 'vscode-high-contrast');
+    if (themeClass) {
+      document.body.classList.add(themeClass);
+    }
+  }
+
   // Utility to add event listeners to a NodeList
   function addListeners(selector, event, handler) {
     document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
@@ -128,6 +136,8 @@
       }
       // Set active button based on config target
       if (msg.configTarget) setActiveConfigButton(msg.configTarget);
+    } else if (msg.type === 'setTheme') {
+      setThemeClass(msg.theme);
     }
   });
 
