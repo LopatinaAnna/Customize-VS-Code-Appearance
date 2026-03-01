@@ -59,7 +59,7 @@
     const icon = header.querySelector('.expand-icon');
     const expanded = settings.style.display !== 'none';
     settings.style.display = expanded ? 'none' : 'block';
-    icon.innerHTML = expanded ? '&#9654;' : '&#9660;';
+    icon.innerHTML = expanded ? '+' : '\u2212';
   }
 
   function handleElementReset(event) {

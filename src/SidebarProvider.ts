@@ -168,11 +168,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const keyList = el.settings.map(s => s.key).join(',');
     return `<div class="element-group" data-group="${idx}" data-keys="${keyList}">
           <button class="element-header" tabindex="0" data-group="${idx}">
-            <span class="element-header-title">${el.label}</span>
             <div class="element-header-icons">
-              <span class="reset-element" title="Reset all the customizations for the ${el.label}">&#x21bb;</span>
-              <span class="expand-icon">&#9654;</span>
+              <span class="expand-icon">+</span>
             </div>
+            <span class="element-header-title">${el.label}</span>
+            <span class="reset-element" title="Reset all the customizations for the ${el.label}">&#x21bb;</span>
           </button>
           <div class="element-settings" style="display:none;">
             ${settingsHtml}
