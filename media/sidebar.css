@@ -275,6 +275,44 @@ select option:hover {
   background-color: #3f3f3f;
 }
 
+.color-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.color-rgb {
+  width: 40px;
+  height: 32px;
+  cursor: pointer;
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.opacity-slider {
+  min-height: 20px;
+  width: 100px;
+  cursor: pointer;
+}
+
+.default-label {
+  font-size: 0.85em;
+  margin-left: 4px;
+  align-self: center;
+}
+
+input[type="range"]:focus {
+    outline: none;
+}
+
 @media (max-width: 350px) {
   .button-group {
     flex-direction: column;

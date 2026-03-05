@@ -2,7 +2,7 @@
   "name": "customize-vs-code-appearance",
   "displayName": "Customize VS Code Appearance",
   "description": "Personalize colors for UI elements, editor settings, and layout preferences with live preview. Preview version. Development is in progress.",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "icon": "media/edit-sparkle128.png",
   "publisher": "AnnaLopatina",
   "author": {

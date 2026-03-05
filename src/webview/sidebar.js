@@ -21,12 +21,16 @@
 
     addListeners('.element-header', 'mouseenter', handleGroupHover);
     addListeners('.element-header', 'mouseleave', handleGroupLeave);
-    addListeners('.setting-item', 'mouseenter', handleHover);
-    addListeners('.setting-item', 'mouseleave', handleLeave);
+    addListeners('.setting-label', 'mouseenter', handleHover);
+    addListeners('.setting-label', 'mouseleave', handleLeave);
     addListeners('.position-select', 'change', handlePositionChange);
 
     addListeners('.picker', 'input', handleColorChange);
     addListeners('.picker', 'change', handleColorChange);
+    addListeners('.picker-hex', 'input', handleHexColorInput);
+    addListeners('.color-rgb', 'input', handleColorRgbChange);
+    addListeners('.color-rgb', 'change', handleColorRgbChange);
+    addListeners('.opacity-slider', 'input', handleOpacityChange);
     addListeners('.number-input', 'input', handleNumberChange);
     addListeners('.string-input', 'input', handleStringChange);
 
@@ -89,9 +93,29 @@
     vscode.postMessage({ type: 'setString', key, value: select.value });
   }
 
+  function handleHexColorInput(event) {
+    const input = event.currentTarget;
+    let value = input.value;
+    
+    // Remove any invalid characters (keep only # and hex digits)
+    value = value.replace(/[^#0-9a-fA-F]/g, '');
+    
+    // Ensure it starts with #
+    if (value && !value.startsWith('#')) {
+      value = '#' + value;
+    }
+    
+    // Limit to 9 characters (#RRGGBBAA)
+    if (value.length > 9) {
+      value = value.substring(0, 9);
+    }
+    
+    input.value = value;
+  }
+
   function handleGroupHover(event) {
     const group = event.currentTarget.closest('.element-group');
-    const firstSetting = group.querySelector('.setting-item');
+    const firstSetting = group.querySelector('.setting-label');
     if (firstSetting) {
       const key = firstSetting.getAttribute('data-key');
       vscode.postMessage({ type: 'hover', key });
@@ -100,7 +124,7 @@
 
   function handleGroupLeave(event) {
     const group = event.currentTarget.closest('.element-group');
-    const firstSetting = group.querySelector('.setting-item');
+    const firstSetting = group.querySelector('.setting-label');
     if (firstSetting) {
       const key = firstSetting.getAttribute('data-key');
       vscode.postMessage({ type: 'leave', key });
@@ -120,7 +144,58 @@
   function handleColorChange(event) {
     const input = event.currentTarget;
     const key = input.getAttribute('data-key');
-    vscode.postMessage({ type: 'setColor', key, color: input.value });
+    const value = input.value;
+    
+    // Validate hex color format: #RRGGBB or #RRGGBBAA
+    if (input.classList.contains('picker-hex')) {
+      // For text input, validate 6 or 8 digit hex
+      if (!/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) {
+        console.warn(`Invalid hex color format: ${value}. Expected #RRGGBB or #RRGGBBAA`);
+        return;
+      }
+    }
+    
+    vscode.postMessage({ type: 'setColor', key, color: value });
+  }
+
+  function handleColorRgbChange(event) {
+    const input = event.currentTarget;
+    const key = input.getAttribute('data-key');
+    const rgbColor = input.value; // e.g., #FF0000
+    
+    // Get the opacity slider in the same group
+    const group = input.closest('.color-input-group');
+    const opacitySlider = group?.querySelector('.opacity-slider');
+    const opacityPercent = opacitySlider?.value || '100';
+    
+    // Convert percentage to hex (0-255)
+    const opacityHex = Math.round((parseInt(opacityPercent) / 100) * 255).toString(16).padStart(2, '0').toUpperCase();
+    
+    // Combine RGB and alpha: #RRGGBBAA
+    const fullColor = rgbColor + opacityHex;
+    
+    vscode.postMessage({ type: 'setColor', key, color: fullColor });
+  }
+
+  function handleOpacityChange(event) {
+    const slider = event.currentTarget;
+    const key = slider.getAttribute('data-key');
+    const opacityPercent = slider.value;
+    
+    // Update the opacity label
+    slider.title = `Opacity: ${opacityPercent}%`;
+    
+    // Get the RGB color from the color picker in the same group
+    const group = slider.closest('.color-input-group');
+    const colorRgb = group?.querySelector('.color-rgb')?.value || '#000000';
+    
+    // Convert percentage to hex (0-255)
+    const opacityHex = Math.round((parseInt(opacityPercent) / 100) * 255).toString(16).padStart(2, '0').toUpperCase();
+    
+    // Combine RGB and alpha: #RRGGBBAA
+    const fullColor = colorRgb + opacityHex;
+    
+    vscode.postMessage({ type: 'setColor', key, color: fullColor });
   }
 
   function handleNumberChange(event) {
