@@ -155,6 +155,14 @@
         return;
       }
     }
+
+    // Hide the default label since a custom color is set
+    const group = event.target.closest('.color-input-group');
+    const defaultLabel = group.querySelector('.default-label');
+    if (defaultLabel) {
+      defaultLabel.innerHTML = '';
+      defaultLabel.title = '';
+    }
     
     vscode.postMessage({ type: 'setColor', key, color: value });
   }

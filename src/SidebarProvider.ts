@@ -18,9 +18,30 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this.setupThemeListener(webviewView);
       this.setupStateManagement(webviewView);
       this.setupMessageHandler(webviewView);
+
+      webviewView.onDidChangeVisibility(async () => {
+        if (webviewView.visible) {
+          await this.refreshUI(webviewView);
+        }
+      });
     } catch (err) {
       console.error('Failed to resolve webview view:', err);
     }
+  }
+
+  private refreshWorkspaceAvailability(webviewView: vscode.WebviewView): void {
+    const workspaceAvailable = !!vscode.workspace.workspaceFolders?.length;
+    if (workspaceAvailable && SettingsManager.getConfigTarget() === 'Global') {
+      SettingsManager.setConfigTarget('Workspace');
+    }
+    if (!workspaceAvailable && SettingsManager.getConfigTarget() !== 'Global') {
+      SettingsManager.setConfigTarget('Global');
+    }
+    webviewView.webview.postMessage({
+      type: 'workspaceAvailability',
+      available: workspaceAvailable,
+      configTarget: SettingsManager.getConfigTarget(),
+    });
   }
 
   private setupThemeListener(webviewView: vscode.WebviewView): void {
@@ -35,45 +56,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private setupStateManagement(webviewView: vscode.WebviewView): void {
-    const sendState = () => {
-      const workspaceAvailable = !!vscode.workspace.workspaceFolders?.length;
-      if (workspaceAvailable && SettingsManager.getConfigTarget() === 'Global') {
-        SettingsManager.setConfigTarget('Workspace');
-      }
-      if (!workspaceAvailable && SettingsManager.getConfigTarget() !== 'Global') {
-        SettingsManager.setConfigTarget('Global');
-      }
-      webviewView.webview.postMessage({
-        type: 'workspaceAvailability',
-        available: workspaceAvailable,
-        configTarget: SettingsManager.getConfigTarget(),
-      });
-    };
-    sendState();
+    this.refreshWorkspaceAvailability(webviewView);
   }
 
   private setupMessageHandler(webviewView: vscode.WebviewView): void {
-    const sendState = () => {
-      const workspaceAvailable = !!vscode.workspace.workspaceFolders?.length;
-      if (workspaceAvailable && SettingsManager.getConfigTarget() === 'Global') {
-        SettingsManager.setConfigTarget('Workspace');
-      }
-      if (!workspaceAvailable && SettingsManager.getConfigTarget() !== 'Global') {
-        SettingsManager.setConfigTarget('Global');
-      }
-      webviewView.webview.postMessage({
-        type: 'workspaceAvailability',
-        available: workspaceAvailable,
-        configTarget: SettingsManager.getConfigTarget(),
-      });
-    };
+    const sendState = () => this.refreshWorkspaceAvailability(webviewView);
 
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
+        if (msg.type === 'consoleLog') {
+          console.log(msg.message);
+          return;
+        }
+
         if (msg.type === 'resetScope' && (msg.target === 'Global' || msg.target === 'Workspace')) {
           this.withConfirmation(`Are you sure you want to reset ${msg.target} settings?`, async () => {
             await SettingsManager.resetScope(msg.target);
-            await this.refreshUI(webviewView, sendState);
+            await this.refreshUI(webviewView);
             vscode.window.showInformationMessage(`${msg.target} settings reset`);
           });
           return;
@@ -82,7 +81,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         if (msg.type === 'resetGroup' && Array.isArray(msg.keys)) {
           this.withConfirmation(`Are you sure you want to reset ${msg.label ?? 'group'} settings?`, async () => {
             await SettingsManager.resetGroup(msg.keys);
-            await this.refreshUI(webviewView, sendState);
+            await this.refreshUI(webviewView);
             vscode.window.showInformationMessage(`${msg.label ?? 'Group'} settings reset`);
           });          
           return;
@@ -102,10 +101,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async refreshUI(webviewView: vscode.WebviewView, sendState: () => void): Promise<void> {
+  private async refreshUI(webviewView: vscode.WebviewView): Promise<void> {
     await SettingsManager.loadBaseColors();
+    webviewView.webview.html = ''; // clear before updating to prevent flash of old content
     webviewView.webview.html = await this.getHtml(webviewView.webview, ELEMENTS);
-    sendState();
+    this.refreshWorkspaceAvailability(webviewView);
   }
 
   private async handleWebviewMessage(msg: any, sendState: () => void): Promise<void> {
@@ -233,9 +233,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   private getColorInput(setting: ElementSetting): string {
     const color = this.sanitizeHex(SettingsManager.baseColors[setting.key]);
-    
+    const defaultColor = '#000000';
+
     // Extract RGB (6 chars) and alpha (2 chars) from the color value
-    let rgbColor = '#000000'; // default RGB
+    let rgbColor = defaultColor; // default RGB
     let alphaPercent = '100'; // default opacity
     
     if (color) {
@@ -250,7 +251,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    const isDefault = rgbColor == '#000000';
+    const isDefault = !color;
     
     return `<div class="color-input-group" data-key="${setting.key}">
       <span class="default-label" title="${isDefault ? "Color is not customized." : ""}">${isDefault ? "★" : ""}</span>
