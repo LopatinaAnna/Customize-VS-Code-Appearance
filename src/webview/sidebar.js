@@ -42,6 +42,7 @@
 
     const btnGlobal = document.getElementById('btn-global');
     const btnWorkspace = document.getElementById('btn-workspace');
+    const enableHighlighting = document.getElementById('enableHighlighting');
 
     if (btnGlobal) {
       btnGlobal.addEventListener('click', () => {
@@ -53,6 +54,12 @@
       btnWorkspace.addEventListener('click', () => {
         vscode.postMessage({ type: 'setConfigTarget', target: 'Workspace' });
         setActiveConfigButton('Workspace');
+      });
+    }
+    if (enableHighlighting) {
+      enableHighlighting.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        vscode.postMessage({ type: 'toggleHighlighting', enabled: isChecked });
       });
     }
   }
@@ -189,10 +196,9 @@
 
     // Hide the default label since a custom color is set
     const group = event.target.closest('.color-input-group');
-    const defaultLabel = group.querySelector('.default-label');
-    if (defaultLabel) {
-      defaultLabel.innerHTML = '';
-      defaultLabel.title = '';
+    const picker = group.querySelector('.picker');
+    if (picker) {
+      picker.title = value;
     }
     
     vscode.postMessage({ type: 'setColor', section, key, color: value });

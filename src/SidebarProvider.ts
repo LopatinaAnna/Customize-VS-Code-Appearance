@@ -63,6 +63,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       try {
         switch (msg.type) {
+          case 'toggleHighlighting':
+            SettingsManager.isHighlightingEnabled = msg.enabled;
+            break;
           case 'hover':
             await SettingsManager.onHover(msg.key);
             break;
@@ -206,10 +209,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           <div class="element-header-icons">
             <span class="expand-icon">+</span>
           </div>
-          <span class="element-header-title" title="${el.description}">${el.label}</span>
+          <span class="element-header-title">${el.label}</span>
           <span class="reset-element" title="Reset all the customizations for the ${el.label}">&#x21bb;</span>
         </button>
         <div class="element-settings" style="display:none;">
+          <span>${el.description}</span>
           ${settingsHtml}
         </div>
       </div>`;
@@ -274,8 +278,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     
     return `
       <div class="color-input-group" data-section="${setting.section}" data-key="${setting.key}">
-        <span class="default-label" title="${!color ? "Color is not customized." : ""}">${!color ? "*" : ""}</span>
-        <input type="color" class="picker color-rgb input-style" data-section="${setting.section}" data-key="${setting.key}" value="${rgbColor}" />
+        <input type="color" class="picker color-rgb input-style" title="${!color ? "Color is not customized." : rgbColor}" data-section="${setting.section}" data-key="${setting.key}" value="${rgbColor}" />
         <div class="opacity-control">
           <input
             type="range"

@@ -160,7 +160,7 @@ body.vscode-light .button-group .config-btn:disabled {
 
 /* Expandable element group */
 .element-group {
-  border-radius: 8px;
+  border-radius: 4px;
   background-color: var(--vscode-sideBar-background);
   margin-bottom: 12px;
   box-shadow: 0 1px 4px 0 var(--vscode-editorWidget-shadow, #0002);
@@ -254,11 +254,11 @@ body.vscode-light .button-group .config-btn:disabled {
   border-bottom: none;
 }
 
-.setting-item span {
+.setting-item span, .element-settings span {
   color: var(--vscode-sideBar-foreground);
 }
 
-.picker, .number-input, .string-input {
+.number-input, .string-input {
   margin-left: 10px;
   min-width: 40px;
   border-radius: 4px;
@@ -270,7 +270,11 @@ body.vscode-light .button-group .config-btn:disabled {
   transition: border 0.2s;
 }
 
-.picker:focus, .number-input:focus, .string-input:focus {
+.checkbox-input {
+  accent-color: var(--vscode-input-background);
+}
+
+.picker:focus, .number-input:focus, .string-input:focus, .checkbox-input:focus {
   border-color: var(--vscode-focusBorder);
   outline: none;
 }
@@ -296,7 +300,10 @@ body.vscode-light .button-group .config-btn:disabled {
 }
 
 .picker {
-  margin-left: 8px;
+  min-width: 40px;
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  font-size: var(--vscode-font-size, 13px);
 }
 
 input[type="number"] {
@@ -361,7 +368,7 @@ input[type="range"]:focus {
     outline: none;
 }
 
-@media (max-width: 350px) {
+@media (max-width: 450px) {
   .button-group {
     flex-direction: column;
     gap: 4px;
@@ -374,5 +381,11 @@ input[type="range"]:focus {
     line-height: 1.1;
     max-height: 32px;
     box-sizing: border-box;
+  }
+
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }

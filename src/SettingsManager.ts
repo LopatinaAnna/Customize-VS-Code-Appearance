@@ -13,6 +13,7 @@ export class SettingsManager {
   private static pendingWrite: NodeJS.Timeout | null = null;
   private static lastWritePromise: Promise<void> = Promise.resolve();
   private static configTarget: ConfigTarget = 'Global';
+  public static isHighlightingEnabled: boolean = true;
   public static baseSettings: ItemSetting[] = [];
 
   /**
@@ -66,7 +67,7 @@ export class SettingsManager {
    * Temporarily highlights an element on hover.
    */
   public static async onHover(key: string): Promise<void> {
-    if (this.tempHighlights[key]) return;
+    if (!this.isHighlightingEnabled || this.tempHighlights[key]) return;
     this.tempHighlights[key] = HIGHLIGHT_COLOR;
     await this.applyEffectiveColors();
   }
@@ -75,7 +76,7 @@ export class SettingsManager {
    * Removes the temporary highlight when the mouse leaves.
    */
   public static async onLeave(key: string): Promise<void> {
-    if (!this.tempHighlights[key]) return;
+    if (!this.isHighlightingEnabled || !this.tempHighlights[key]) return;
     delete this.tempHighlights[key];
     await this.applyEffectiveColors();
   }

@@ -1,10 +1,25 @@
 # Changelog
 
+## [1.0.10] - 2026-03-22
+
+### Improved
+
+- Extended list of customizable elements.
+
+### Added
+
+- Added ability to disable temporary highlighting.
+- Added layout adaptation for small width of view.
+
 ## [1.0.9] - 2026-03-21
 
 ### Improved
 
 - Extended list of customizable elements.
+
+### Added
+
+- Added description to groups and elements.
 
 ## [1.0.8] - 2026-03-21
 
