@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ELEMENTS } from './ElementRegistry';
 import { ItemSetting } from './models/ItemSetting';
+import { ElementSetting } from './interfaces/ElementSetting';
 
 const HIGHLIGHT_COLOR = '#9a9a9aff';
 const COLOR_CUSTOMIZATION_KEY = 'workbench.colorCustomizations';
@@ -84,11 +85,11 @@ export class SettingsManager {
   /**
    * Sets a persistent color for an element.
    */
-  public static async onSetColor(section: string, key: string, color: string): Promise<void> {
+  public static async onSetColor(setting: ElementSetting, color: string): Promise<void> {
     if (!color || color.trim() === '') {
-      this.removeSetting(section, key);
+      this.removeSetting(setting.section, setting.key);
     } else {
-      this.addOrUpdateSetting(section, key, color);
+      this.addOrUpdateSetting(setting.section, setting.key, color);
     }
     await this.applyEffectiveColors();
   }
@@ -96,19 +97,19 @@ export class SettingsManager {
   /**
    * Handles other number settings like font size.
    */
-  public static async onSetNumber(section: string, key: string, value: string): Promise<void> {
-    this.addOrUpdateSetting(section, key, value);
-    const config = vscode.workspace.getConfiguration(section);
-    await config.update(key, parseInt(value), SettingsManager.getVscodeConfigTarget());
+  public static async onSetNumber(setting: ElementSetting, value: string): Promise<void> {
+    this.addOrUpdateSetting(setting.section, setting.key, value);
+    const config = vscode.workspace.getConfiguration(setting.section);
+    await config.update(setting.key, parseInt(value), SettingsManager.getVscodeConfigTarget());
   }
 
   /**
    * Handles string settings like font family.
    */
-  public static async onSetString(section: string, key: string, value: string): Promise<void> {
-    this.addOrUpdateSetting(section, key, value);
-    const config = vscode.workspace.getConfiguration(section);
-    await config.update(key, value, SettingsManager.getVscodeConfigTarget());
+  public static async onSetString(setting: ElementSetting, value: string): Promise<void> {
+    this.addOrUpdateSetting(setting.section, setting.key, value);
+    const config = vscode.workspace.getConfiguration(setting.section);
+    await config.update(setting.key, value, SettingsManager.getVscodeConfigTarget());
   }
 
   /**
@@ -128,11 +129,19 @@ export class SettingsManager {
 
     const config = vscode.workspace.getConfiguration();
     elementsToReset.settings.forEach(setting => {
-        console.log(`Resetting setting: ${setting.section} ${setting.key}`);
-        config.update(`${setting.section}.${setting.key}`, undefined, SettingsManager.getVscodeConfigTarget());
-        this.removeSetting(setting.section, setting.key);
-        delete this.tempHighlights[setting.key];
-      });
+      this.resetElement(setting, config);
+    });
+  }
+
+  /**
+   * Reset a specific element setting to its default value.
+   */
+  public static resetElement(setting: ElementSetting, config?: vscode.WorkspaceConfiguration): void {
+    config = config || vscode.workspace.getConfiguration();
+    console.log(`Resetting element: ${setting.section}.${setting.key}`);
+    config.update(`${setting.section}.${setting.key}`, undefined, SettingsManager.getVscodeConfigTarget());
+    this.removeSetting(setting.section, setting.key);
+    delete this.tempHighlights[setting.key];
   }
 
   /**

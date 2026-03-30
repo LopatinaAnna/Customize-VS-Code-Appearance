@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.11] - 2026-03-31
+
+### Added
+
+- Added ability to refresh each setting in the group.
+
+### Improved
+
+- Enhanced UI responsiveness when resetting setting group.
+- Improved input handling.
+
+### Fixed
+
+- Fixed bugs related to input controls and element resets.
+
 ## [1.0.10] - 2026-03-22
 
 ### Improved

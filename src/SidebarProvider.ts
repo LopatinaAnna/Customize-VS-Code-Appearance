@@ -73,13 +73,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             await SettingsManager.onLeave(msg.key);
             break;
           case 'setColor':
-            await SettingsManager.onSetColor(msg.section, msg.key, msg.color);
+            await SettingsManager.onSetColor(msg.setting, msg.color);
             break;
           case 'setNumber':
-            await SettingsManager.onSetNumber(msg.section, msg.key, msg.value);
+            await SettingsManager.onSetNumber(msg.setting, msg.value);
             break;
           case 'setString':
-            await SettingsManager.onSetString(msg.section, msg.key, msg.value);
+            await SettingsManager.onSetString(msg.setting, msg.value);
             break;
           case 'setConfigTarget':
             SettingsManager.setConfigTarget(msg.target);
@@ -98,9 +98,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           case 'resetGroup':
             this.withConfirmation(`Are you sure you want to reset ${msg.label} settings?`, async () => {
               SettingsManager.resetGroup(msg.label);
-              await this.refreshUI(webviewView);
+              SettingsManager.applyEffectiveColors();
+              await this.refreshGroupUI(webviewView, msg.label);
               vscode.window.showInformationMessage(`${msg.label} settings reset`);
             });
+            break;
+          case 'resetElement':
+            SettingsManager.resetElement(msg.setting);
+            SettingsManager.applyEffectiveColors();
+            await this.refreshElementUI(webviewView, msg.setting);
+            vscode.window.showInformationMessage(`${msg.setting.label} reset`);
             break;
           case 'consoleLog':
             console.log(msg.message);
@@ -129,33 +136,36 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     this.refreshWorkspaceAvailability(webviewView);
   }
 
-  private async handleWebviewMessage(msg: any, sendState: () => void): Promise<void> {
-    switch (msg.type) {
-      case 'hover':
-        await SettingsManager.onHover(msg.key);
-        break;
-      case 'leave':
-        await SettingsManager.onLeave(msg.key);
-        break;
-      case 'setColor':
-        await SettingsManager.onSetColor(msg.section, msg.key, msg.color);
-        break;
-      case 'setNumber':
-        await SettingsManager.onSetNumber(msg.section, msg.key, msg.value);
-        break;
-      case 'setString':
-        await SettingsManager.onSetString(msg.section, msg.key, msg.value);
-        break;
-      case 'setConfigTarget':
-        SettingsManager.setConfigTarget(msg.target);
-        sendState();
-        break;
-      case 'requestState':
-        sendState();
-        break;
-      default:
-        console.warn('Unknown message type:', msg.type);
+  private async refreshGroupUI(webviewView: vscode.WebviewView, label: string): Promise<void> {
+    console.log(`Refreshing UI for group: ${label}`);
+    const group = ELEMENTS.find(g => g.label === label);
+    if (group) {
+      for (const setting of group.settings) {
+        await this.refreshElementUI(webviewView, setting);
+      }
     }
+    let elementsToRefresh = ELEMENTS.find(g => g.label === label);
+    if (!elementsToRefresh) {
+      console.warn(`No group found with label ${label}`);
+      return;
+    }
+    
+    elementsToRefresh.settings.forEach(setting => {
+      this.refreshElementUI(webviewView, setting);
+    });
+  }
+
+  private async refreshElementUI(webviewView: vscode.WebviewView, setting: ElementSetting): Promise<void> {
+    console.log(`Refreshing UI for element: ${setting.section}.${setting.key}`);
+    const elementHtml = this.getInputHtml(setting);
+    webviewView.webview.postMessage({
+      type: 'replaceElement',
+      newHtml: elementHtml,
+      section: setting.section,
+      key: setting.key,
+      elementType: setting.type,
+      options: setting.options
+    });
   }
 
   /**
@@ -202,18 +212,20 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         </span>
         ${this.getInputHtml(setting)}
       </div>`).join('');
-    const keyList = el.settings.map(s => s.key).join(',');
+
     return `
-      <div class="element-group" data-group="${idx}" data-keys="${keyList}" data-label="${el.label}">
-        <button class="element-header" tabindex="0" data-group="${idx}">
-          <div class="element-header-icons">
-            <span class="expand-icon">+</span>
-          </div>
-          <span class="element-header-title">${el.label}</span>
-          <span class="reset-element" title="Reset all the customizations for the ${el.label}">&#x21bb;</span>
-        </button>
+      <div class="element-group" data-group="${idx}" data-label="${el.label}">
+        <div class="element-group-container">
+          <button class="element-header" tabindex="0" data-group="${idx}">
+            <div class="element-header-icons">
+              <span class="expand-icon">+</span>
+            </div>
+            <span class="element-header-title">${el.label}</span>
+            <span class="reset-group" title="Reset all the customizations for the ${el.label}">&#x21bb;</span>
+          </button>
+          <div class="element-group-description">${el.description}</div>
+        </div>
         <div class="element-settings" style="display:none;">
-          <span>${el.description}</span>
           ${settingsHtml}
         </div>
       </div>`;
@@ -277,17 +289,20 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
     
     return `
-      <div class="color-input-group" data-section="${setting.section}" data-key="${setting.key}">
-        <input type="color" class="picker color-rgb input-style" title="${!color ? "Color is not customized." : rgbColor}" data-section="${setting.section}" data-key="${setting.key}" value="${rgbColor}" />
-        <div class="opacity-control">
-          <input
-            type="range"
-            class="opacity-slider"
-            title="Opacity: ${alphaPercent}%"
-            data-section="${setting.section}" data-key="${setting.key}"
-            min="0"
-            max="100"
-            value="${alphaPercent}" />
+      <div id="${setting.section}.${setting.key}" class="element-row" data-setting="${encodeURIComponent(JSON.stringify(setting))}">
+        <div class="color-input-group">
+          <input type="color" class="picker color-rgb input-style" title="${!color ? "Color is not customized yet. Click to pick a color." : rgbColor}" value="${rgbColor}" />
+          <div class="opacity-control">
+            <input
+              type="range"
+              id="opacity-${setting.key}"
+              class="opacity-slider"
+              title="Opacity: ${alphaPercent}%"
+              min="0"
+              max="100"
+              value="${alphaPercent}" />
+          </div>
+          <span class="reset-element" title="Reset">&#x21bb;</span>
         </div>
       </div>`;
   }
@@ -296,43 +311,48 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const currentValue = SettingsManager.getSettingValue(setting.section, setting.key);
     const value: number = currentValue ? parseInt(currentValue) || 0 : 0;
     return `
-      <div class="number-input-wrapper">
-        <input
-          type="number"
-          class="number-input input-style"
-          data-section="${setting.section}"
-          data-key="${setting.key}"
-          value="${value ? value : ''}"
-          min="6"
-          max="100"
-          step="1" />
-        <button type="button" class="number-up" data-key="${setting.key}" title="Increase">▲</button>
-        <button type="button" class="number-down" data-key="${setting.key}" title="Decrease">▼</button>
+      <div id="${setting.section}.${setting.key}" class="element-row" data-setting="${encodeURIComponent(JSON.stringify(setting))}">
+        <div class="number-input-wrapper">
+          <input
+            type="number"
+            class="number-input input-style"
+            value="${value ? value : setting.defaultValue || ''}"
+            min="6"
+            max="100"
+            step="1" />
+          <button type="button" class="number-up" title="Increase">▲</button>
+          <button type="button" class="number-down" title="Decrease">▼</button>
+        </div>
+        <span class="reset-element" title="Reset">&#x21bb;</span>
       </div>`;
   }
 
   private getSelectInput(setting: ElementSetting): string {
-    const value = SettingsManager.getSettingValue(setting.section, setting.key) || '';
+    const value = SettingsManager.getSettingValue(setting.section, setting.key) || setting.defaultValue || '';
     const options = (setting.options || []).map(opt =>
-      `<option value="${opt}" ${opt === value || (!setting.options?.includes(value) && opt === 'default') ? 'selected' : ''}>
+      `<option value="${opt}" ${opt === value || opt === setting.defaultValue ? 'selected' : ''}>
         ${opt.charAt(0).toUpperCase() + opt.slice(1)}
       </option>`
     ).join('');
     return `
-      <select class="position-select input-style" data-section="${setting.section}" data-key="${setting.key}">
-        <option selected value="" disabled>
-        </option>${options}
-      </select>`;
+      <div id="${setting.section}.${setting.key}" class="element-row" data-setting="${encodeURIComponent(JSON.stringify(setting))}">
+        <select class="select-input input-style">
+          <option selected value="" disabled>
+          </option>${options}
+        </select>
+        <span class="reset-element" title="Reset">&#x21bb;</span>
+      </div>`;
   }
 
   private getTextInput(setting: ElementSetting): string {
-    const value = SettingsManager.getSettingValue(setting.section, setting.key) || '';
+    const value = SettingsManager.getSettingValue(setting.section, setting.key) || setting.defaultValue || '';
     return `
-      <input
-        type="text"
-        class="string-input input-style"
-        data-section="${setting.section}"
-        data-key="${setting.key}"
-        value="${value}" />`;
+      <div id="${setting.section}.${setting.key}" class="element-row" data-setting="${encodeURIComponent(JSON.stringify(setting))}">
+        <input
+          type="text"
+          class="string-input input-style"
+          value="${value}" />
+        <span class="reset-element" title="Reset">&#x21bb;</span>
+      </div>`;
   }
 }

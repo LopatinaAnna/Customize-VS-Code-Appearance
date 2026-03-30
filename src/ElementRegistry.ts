@@ -36,7 +36,7 @@ export const ELEMENTS: ElementDefinition[] = [
       { label: 'Warning Badge Foreground', section: 'workbench.colorCustomizations', key: 'activityWarningBadge.foreground', type: 'color', description: 'The foreground color of the activity bar warning badge.' },
       { label: 'Error Badge Background', section: 'workbench.colorCustomizations', key: 'activityErrorBadge.background', type: 'color', description: 'The background color of the activity bar error badge.' },
       { label: 'Error Badge Foreground', section: 'workbench.colorCustomizations', key: 'activityErrorBadge.foreground', type: 'color', description: 'The foreground color of the activity bar error badge.' },
-      { label: 'Position', section: 'workbench.activityBar', key: 'location', type: 'string', options: ['default', 'top', 'bottom', 'hidden'], description: 'The location of the activity bar. "default" means left in LTR and right in RTL. When positioned at the top or bottom, it takes sidebar colors unless "Top ..." setting customized.' },
+      { label: 'Position', section: 'workbench.activityBar', key: 'location', type: 'string', options: ['default', 'top', 'bottom', 'hidden'], defaultValue: 'default', description: 'The location of the activity bar. "default" means left in LTR and right in RTL. When positioned at the top or bottom, it takes sidebar colors unless "Top ..." setting customized.' },
     ],
   },
   {
@@ -57,7 +57,7 @@ export const ELEMENTS: ElementDefinition[] = [
       { label: 'Sticky Scroll Background', section: 'workbench.colorCustomizations', key: 'sideBarStickyScroll.background', type: 'color', description: 'The background color of the side bar sticky scroll.' },
       { label: 'Sticky Scroll Border', section: 'workbench.colorCustomizations', key: 'sideBarStickyScroll.border', type: 'color', description: 'The border color of the side bar sticky scroll.' },
       { label: 'Sticky Scroll Shadow', section: 'workbench.colorCustomizations', key: 'sideBarStickyScroll.shadow', type: 'color', description: 'The shadow color of the side bar sticky scroll.' },
-      { label: 'Position', section: 'workbench.sideBar', key: 'location', type: 'string', options: ['left', 'right'], description: 'The position of the side bar.' },
+      { label: 'Position', section: 'workbench.sideBar', key: 'location', type: 'string', options: ['left', 'right'], defaultValue: 'left', description: 'The position of the side bar.' },
     ],
   },
   {
@@ -67,7 +67,7 @@ export const ELEMENTS: ElementDefinition[] = [
       { label: 'Background', section: 'workbench.colorCustomizations', key: 'editor.background', type: 'color', description: 'Editor background color.' },
       { label: 'Foreground', section: 'workbench.colorCustomizations', key: 'editor.foreground', type: 'color', description: 'Editor default foreground color.' },
 
-      { label: 'Font Size', section: 'editor', key: 'fontSize', type: 'number', description: 'Controls the font size in pixels.' },
+      { label: 'Font Size', section: 'editor', key: 'fontSize', type: 'number', defaultValue: 14, description: 'Controls the font size in pixels.' },
 
       { label: 'Line Number Foreground', section: 'workbench.colorCustomizations', key: 'editorLineNumber.foreground', type: 'color', description: 'Color of editor line numbers.' },
       { label: 'Active Line Number', section: 'workbench.colorCustomizations', key: 'editorLineNumber.activeForeground', type: 'color', description: 'Color of the active editor line number.' },

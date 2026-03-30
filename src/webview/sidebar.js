@@ -13,32 +13,24 @@
   }
 
   function attachListeners() {
-    addListeners('.element-header', 'click', handleExpandCollapse);
-    addListeners('.element-header', 'keydown', function(e) {
+    addListeners('.element-group-container', 'click', handleExpandCollapse);
+    addListeners('.element-group-container', 'keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') handleExpandCollapse(e);
     });
-    addListeners('.reset-element', 'click', handleElementReset);
-
-    addListeners('.element-header-title', 'mouseenter', handleGroupHover);
-    addListeners('.element-header-title', 'mouseleave', handleGroupLeave);
-    addListeners('.setting-label', 'mouseenter', handleHover);
-    addListeners('.setting-label', 'mouseleave', handleLeave);
-    addListeners('.position-select', 'change', handlePositionChange);
-
-    addListeners('.picker', 'input', handleColorChange);
-    addListeners('.picker', 'change', handleColorChange);
-    addListeners('.picker-hex', 'input', handleHexColorInput);
-    addListeners('.color-rgb', 'input', handleColorRgbChange);
-    addListeners('.color-rgb', 'change', handleColorRgbChange);
-    addListeners('.opacity-slider', 'input', handleOpacityChange);
-
-    addListeners('.number-input', 'input', handleNumberChange);
-    addListeners('.string-input', 'input', handleStringChange);
 
     addListeners('.scope-reset', 'click', handleScopeReset);
+    addListeners('.reset-group', 'click', handleGroupReset);
 
-    addListeners('.number-up', 'click', handleArrowClick(true));
-    addListeners('.number-down', 'click', handleArrowClick(false));
+    addListeners('.element-group-container', 'mouseenter', handleGroupHover);
+    addListeners('.element-group-container', 'mouseleave', handleGroupLeave);
+    addListeners('.setting-label', 'mouseenter', handleHover);
+    addListeners('.setting-label', 'mouseleave', handleLeave);
+
+    addListenersColorInput();
+    addListenersNumberInput();
+    addListenersStringInput();
+    addListenersSelectInput();
+    addListenersResetElement();
 
     const btnGlobal = document.getElementById('btn-global');
     const btnWorkspace = document.getElementById('btn-workspace');
@@ -64,11 +56,49 @@
     }
   }
 
+  function addListenersColorInput(selector) {
+    selector = selector ?? '';
+    vscode.postMessage({ type: 'consoleLog', message: `Adding color input listeners for selector: '${selector}'` });
+    addListeners(`${selector}.picker`, 'input', handleColorChange);
+    addListeners(`${selector}.picker`, 'change', handleColorChange);
+    addListeners(`${selector}.picker-hex`, 'input', handleHexColorInput);
+    addListeners(`${selector}.color-rgb`, 'input', handleColorRgbChange);
+    addListeners(`${selector}.color-rgb`, 'change', handleColorRgbChange);
+    addListeners(`${selector}.opacity-slider`, 'input', handleOpacityChange);
+  }
+
+  function addListenersNumberInput(selector) {
+    selector = selector ?? '';
+    addListeners(`${selector}.number-input`, 'input', handleNumberChange);
+    addListeners(`${selector}.number-up`, 'click', handleArrowClick(true));
+    addListeners(`${selector}.number-down`, 'click', handleArrowClick(false));
+  }
+
+  function addListenersStringInput(selector) {
+    selector = selector ?? '';
+    addListeners(`${selector}.string-input`, 'input', handleStringChange);
+  }
+
+  function addListenersSelectInput(selector) {
+    selector = selector ?? '';
+    addListeners(`${selector}.select-input`, 'change', handleSelectChange);
+  }
+
+  function addListenersResetElement(selector) {
+    selector = selector ?? '';
+    addListeners(`${selector}.reset-element`, 'click', handleElementReset);
+  }
+
+  function getClosestDataSetting(event) {
+    const element = event.target.closest('.element-row');
+    const settingEncoded = element.dataset.setting;
+    return JSON.parse(decodeURIComponent(settingEncoded));
+  }
+
   function handleArrowClick(isUp) {
     return function(event) {
       event.preventDefault();
       const button = event.currentTarget;
-      const key = button.getAttribute('data-key');
       const wrapper = button.closest('.number-input-wrapper');
       const input = wrapper.querySelector('.number-input');
       if (!input) return;
@@ -89,8 +119,9 @@
       input.dispatchEvent(changeEvent);
     }
   }
+  
   function handleExpandCollapse(event) {
-    if (event.target.closest('.reset-element')) {
+    if (event.target.closest('.reset-group')) {
       return;
     }
     const header = event.currentTarget;
@@ -102,17 +133,47 @@
     icon.innerHTML = expanded ? '+' : '\u2212';
   }
 
-  function handleElementReset(event) {
+  function handleGroupReset(event) {
     event.preventDefault();
     event.stopPropagation();
     const resetIcon = event.currentTarget;
     const header = resetIcon.closest('.element-header');
     const group = header.closest('.element-group');
-    const keys = group?.getAttribute('data-keys')?.split(',').filter(k => k.trim()) || [];
     const label = group?.getAttribute('data-label');
-    if (keys.length > 0) {
-      vscode.postMessage({ type: 'resetGroup', keys, label });
+    if (label) {
+      vscode.postMessage({ type: 'resetGroup', label });
     }
+  }
+
+  function handleElementReset(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const setting = getClosestDataSetting(event);
+    if (setting) {
+      vscode.postMessage({ type: 'resetElement', setting });
+    }
+  }
+
+  function replaceElement(section, key, elementType, options, newHtml) {
+        const target = document.getElementById(`${section}.${key}`);
+        target.outerHTML = newHtml;
+        const dynamicId = `${section}.${key}`;
+        const escapedId = CSS.escape(dynamicId);
+        const selector = `#${escapedId} `;
+
+        if (elementType === 'color') {
+          addListenersColorInput(selector);
+        }
+        if (elementType === 'number') {
+          addListenersNumberInput(selector);
+        }
+        if (elementType === 'string' && options) {
+          addListenersSelectInput(selector);
+        }
+        if (elementType === 'string' && !options) {
+          addListenersStringInput(selector);
+        }
+        addListenersResetElement(selector);
   }
 
   function handleScopeReset(event) {
@@ -124,11 +185,10 @@
     }
   }
 
-  function handlePositionChange(event) {
+  function handleSelectChange(event) {
     const select = event.currentTarget;
-    const key = select.getAttribute('data-key');
-    const section = select.getAttribute('data-section');
-    vscode.postMessage({ type: 'setString', section, key, value: select.value });
+    const setting = getClosestDataSetting(event);
+    vscode.postMessage({ type: 'setString', setting, value: select.value });
   }
 
   function handleHexColorInput(event) {
@@ -181,10 +241,9 @@
 
   function handleColorChange(event) {
     const input = event.currentTarget;
-    const key = input.getAttribute('data-key');
-    const section = input.getAttribute('data-section');
+    const setting = getClosestDataSetting(event);
     const value = input.value;
-    
+
     // Validate hex color format: #RRGGBB or #RRGGBBAA
     if (input.classList.contains('picker-hex')) {
       // For text input, validate 6 or 8 digit hex
@@ -201,13 +260,12 @@
       picker.title = value;
     }
     
-    vscode.postMessage({ type: 'setColor', section, key, color: value });
+    vscode.postMessage({ type: 'setColor', setting, color: value });
   }
 
   function handleColorRgbChange(event) {
     const input = event.currentTarget;
-    const key = input.getAttribute('data-key');
-    const section = input.getAttribute('data-section');
+    const setting = getClosestDataSetting(event);
     const rgbColor = input.value; // e.g., #FF0000
     
     // Get the opacity slider in the same group
@@ -220,13 +278,12 @@
     
     // Combine RGB and alpha: #RRGGBBAA
     const fullColor = rgbColor + opacityHex;
-    vscode.postMessage({ type: 'setColor', section, key, color: fullColor });
+    vscode.postMessage({ type: 'setColor', setting, color: fullColor });
   }
 
   function handleOpacityChange(event) {
     const slider = event.currentTarget;
-    const key = slider.getAttribute('data-key');
-    const section = slider.getAttribute('data-section');
+    const setting = getClosestDataSetting(event);
     const opacityPercent = slider.value;
     
     // Update the opacity label
@@ -242,7 +299,7 @@
     // Combine RGB and alpha: #RRGGBBAA
     const fullColor = colorRgb + opacityHex;
     
-    vscode.postMessage({ type: 'setColor', section, key, color: fullColor });
+    vscode.postMessage({ type: 'setColor', setting, color: fullColor });
   }
 
   function handleNumberChange(event) {
@@ -250,15 +307,14 @@
     if (input.value < 6 || input.value > 100) {
       return;
     }
-    const key = input.getAttribute('data-key');
-    const section = input.getAttribute('data-section');
-    vscode.postMessage({ type: 'setNumber', section, key, value: input.value });
+    const setting = getClosestDataSetting(event);
+    vscode.postMessage({ type: 'setNumber', setting, value: input.value });
   }
 
   function handleStringChange(event) {
     const input = event.currentTarget;
-    const key = input.getAttribute('data-key');
-    vscode.postMessage({ type: 'setString', key, value: input.value });
+    const setting = getClosestDataSetting(event);
+    vscode.postMessage({ type: 'setString', setting, value: input.value });
   }
 
   function setActiveConfigButton(target) {
@@ -278,13 +334,13 @@
       const btnWorkspace = document.getElementById('btn-workspace');
       if (btnGlobal) {
         btnGlobal.disabled = !!msg.available;
-        btnGlobal.title = msg.available ? 'Global config is not available in workspace' : '';
+        btnGlobal.title = msg.available ? 'Global (User) customizations are not available. Close folder or workspace to proceed.' : '';
         // const icon = document.querySelector('.scope-control .scope-reset[data-target="Global"]');
         // if (icon) icon.classList.toggle('disabled', btnGlobal.disabled);
       }
       if (btnWorkspace) {
         btnWorkspace.disabled = !msg.available;
-        btnWorkspace.title = !msg.available ? 'No workspace available' : '';
+        btnWorkspace.title = !msg.available ? 'Workspace customizations are not available without an open folder or workspace.' : '';
         const icon = document.querySelector('.scope-control .scope-reset[data-target="Workspace"]');
         if (icon) {
           icon.classList.toggle('disabled', btnWorkspace.disabled);
@@ -292,8 +348,17 @@
         }
       }
       if (msg.configTarget) setActiveConfigButton(msg.configTarget);
-    } else if (msg.type === 'setTheme') {
+      return;
+    }
+    
+    if (msg.type === 'setTheme') {
       setThemeClass(msg.theme);
+      return;
+    }
+    
+    if (msg.type === 'replaceElement') {
+      replaceElement(msg.section, msg.key, msg.elementType, msg.options, msg.newHtml);
+      return;
     }
   });
 

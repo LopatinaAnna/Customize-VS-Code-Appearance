@@ -5,4 +5,5 @@ export interface ElementSetting {
   type: 'color' | 'number' | 'string';
   description?: string;
   options?: string[];
+  defaultValue?: string | number;
 }

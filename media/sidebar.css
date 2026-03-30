@@ -17,6 +17,11 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   user-select: none;
+  margin-right: 6px;
+}
+
+.select-input, .string-input {
+  margin-right: 6px;
 }
 
 /* Up and down arrow buttons */
@@ -141,14 +146,14 @@ body.vscode-light .button-group .config-btn:disabled {
   background-color: var(--vscode-button-hoverBackground);
 }
 
-.reset-element {
+.reset-group, .reset-element {
   font-size: 1.2em;
   cursor: pointer;
   color: var(--vscode-list-hoverForeground);
   transition: color 0.2s;
   flex-shrink: 0;
 }
-.reset-element:hover {
+.reset-group:hover, .reset-element:hover {
   color: var(--vscode-list-focusForeground, var(--vscode-list-hoverForeground));
   transform: scale(1.2);
 }
@@ -159,6 +164,10 @@ body.vscode-light .button-group .config-btn:disabled {
 }
 
 /* Expandable element group */
+.element-group-container {
+  cursor: pointer;
+}
+
 .element-group {
   border-radius: 4px;
   background-color: var(--vscode-sideBar-background);
@@ -170,7 +179,7 @@ body.vscode-light .button-group .config-btn:disabled {
 }
 
 .element-group:hover {
-  box-shadow: 0 2px 6px 0 var(--vscode-focusBorder);
+  box-shadow: 0 0px 4px 0 var(--vscode-focusBorder);
   border-color: var(--vscode-focusBorder);
 }
 
@@ -182,8 +191,7 @@ body.vscode-light .button-group .config-btn:disabled {
 .element-header {
   display: flex;
   align-items: center;
-  padding: 12px 18px;
-  /* padding: 2px 18px; */
+  padding: 2px 18px;
   cursor: pointer;
   font-size: 1.08em;
   font-weight: 500;
@@ -204,7 +212,7 @@ body.vscode-light .button-group .config-btn:disabled {
 }
 
 .element-header-title {
-  /* padding: 12px; */
+  padding: 12px;
   flex: 1;
 }
 
@@ -238,6 +246,11 @@ body.vscode-light .button-group .config-btn:disabled {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: none; }
+}
+
+.element-group-description {
+  display: inline-block; 
+  padding: 0 16px 16px 16px;
 }
 
 .setting-item {
@@ -332,6 +345,7 @@ select option:hover {
 }
 
 .color-input-group {
+  align-items: center;
   display: flex;
   gap: 8px;
 }
