@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.13] - 2026-04-04
+
+### Fixed
+
+- Added webpack to bundle extension into a single JavaScript file for web
+
 ## [1.0.12] - 2026-04-04
 
 ### Added

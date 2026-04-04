@@ -7,6 +7,7 @@
 			"ESNext",
 			"ES2022"
 		],
+		"types": ["node"],
 		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,
