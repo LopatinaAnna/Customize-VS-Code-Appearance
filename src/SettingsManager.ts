@@ -49,19 +49,24 @@ export class SettingsManager {
    * Loads the current base settings from the VS Code configuration.
    */
   public static loadBaseSettings(): void {
-    const config = vscode.workspace.getConfiguration();
-    ELEMENTS.forEach(element => {
-      element.settings.forEach(setting => {
-        const settings = config.get<Record<string, string>>(setting.section, {});
-        Object.entries(settings || {}).forEach(([key, value]) => {
-          if (setting.key === key) {
-            console.log(`Push setting: ${setting.section} ${key} ${value}`);
-            this.baseSettings.push(new ItemSetting(setting.section, key, value));
-            return;
-          }
+    try {
+      const config = vscode.workspace.getConfiguration();
+      ELEMENTS.forEach(element => {
+        element.settings.forEach(setting => {
+          const settings = config.get<Record<string, string>>(setting.section, {});
+          Object.entries(settings || {}).forEach(([key, value]) => {
+            if (setting.key === key) {
+              console.log(`Push setting: ${setting.section} ${key} ${value}`);
+              this.baseSettings.push(new ItemSetting(setting.section, key, value));
+              return;
+            }
+          });
         });
       });
-    });
+      console.log(`Loaded ${this.baseSettings.length} base settings`);
+    } catch (err) {
+      console.error('Error loading base settings:', err);
+    }
   }
 
   /**
@@ -160,31 +165,39 @@ export class SettingsManager {
    * Applies the effective color customizations to VS Code.
    */
   public static async applyEffectiveColors(): Promise<void> {
-    if (this.pendingWrite) clearTimeout(this.pendingWrite);
-    this.pendingWrite = setTimeout(() => {
-      this.pendingWrite = null;
-      const config = vscode.workspace.getConfiguration();
-      const effective: SettingsMap = {};
+    return new Promise<void>((resolve, reject) => {
+      if (this.pendingWrite) clearTimeout(this.pendingWrite);
+      this.pendingWrite = setTimeout(async () => {
+        try {
+          this.pendingWrite = null;
+          const config = vscode.workspace.getConfiguration();
+          const effective: SettingsMap = {};
 
-      // Apply persistent colors
-      this.baseSettings.forEach((setting) => {
-        if (setting.value !== undefined && setting.section === COLOR_CUSTOMIZATION_KEY) {
-          effective[setting.key] = setting.value;
+          // Apply persistent colors
+          this.baseSettings.forEach((setting) => {
+            if (setting.value !== undefined && setting.section === COLOR_CUSTOMIZATION_KEY) {
+              effective[setting.key] = setting.value;
+            }
+          });
+
+          // Apply temporary highlights (overrides persistent)
+          Object.entries(this.tempHighlights).forEach(([key, value]) => {
+            effective[key] = value;
+          });
+
+          this.lastWritePromise = this.lastWritePromise
+            .then(() => {
+              console.log('UPDATING color customizations with:', effective);
+              return config.update(COLOR_CUSTOMIZATION_KEY, effective, this.toVscodeConfigTarget(this.configTarget));
+            })
+            .catch((err) => console.error('Failed to update color customizations:', err))
+            .finally(() => resolve());
+        } catch (err) {
+          console.error('Error in applyEffectiveColors:', err);
+          resolve();
         }
-      });
-
-      // Apply temporary highlights (overrides persistent)
-      Object.entries(this.tempHighlights).forEach(([key, value]) => {
-        effective[key] = value;
-      });
-
-      this.lastWritePromise = this.lastWritePromise
-        .then(() => {
-          console.log('UPDATING color customizations with:', effective);
-          return config.update(COLOR_CUSTOMIZATION_KEY, effective, this.toVscodeConfigTarget(this.configTarget));
-        })
-        .catch((err) => console.error('Failed to update:', err));
-    }, 10);
+      }, 10);
+    });
   }
 
   /**

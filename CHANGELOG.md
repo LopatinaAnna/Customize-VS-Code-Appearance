@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.14] - 2026-04-04
+
+### Fixed
+
+- Updated error handling for configuration updates
+
 ## [1.0.13] - 2026-04-04
 
 ### Fixed

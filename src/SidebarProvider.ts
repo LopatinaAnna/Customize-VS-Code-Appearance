@@ -89,6 +89,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           case 'resetScope':
             this.withConfirmation(`Are you sure you want to reset ${msg.target} settings?`, async () => {
               SettingsManager.resetScope(msg.target);
+              await SettingsManager.applyEffectiveColors();
               await this.refreshUI(webviewView);
               vscode.window.showInformationMessage(`${msg.target} settings reset`);
             });
@@ -96,14 +97,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           case 'resetGroup':
             this.withConfirmation(`Are you sure you want to reset ${msg.label} settings?`, async () => {
               SettingsManager.resetGroup(msg.label);
-              SettingsManager.applyEffectiveColors();
+              await SettingsManager.applyEffectiveColors();
               await this.refreshGroupUI(webviewView, msg.label);
               vscode.window.showInformationMessage(`${msg.label} settings reset`);
             });
             break;
           case 'resetElement':
             SettingsManager.resetElement(msg.setting);
-            SettingsManager.applyEffectiveColors();
+            await SettingsManager.applyEffectiveColors();
             await this.refreshElementUI(webviewView, msg.setting);
             vscode.window.showInformationMessage(`${msg.setting.label} reset`);
             break;
@@ -128,7 +129,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   private async refreshUI(webviewView: vscode.WebviewView): Promise<void> {
     console.log('Refreshing UI with latest settings...');
-    SettingsManager.applyEffectiveColors();
+    await SettingsManager.applyEffectiveColors();
     webviewView.webview.html = ''; // clear before updating to prevent flash of old content
     webviewView.webview.html = await this.getHtml(webviewView.webview, ELEMENTS);
     this.refreshWorkspaceAvailability(webviewView);
