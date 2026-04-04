@@ -2,7 +2,7 @@
   "name": "customize-vs-code-appearance",
   "displayName": "Customize VS Code Appearance",
   "description": "Personalize colors in the Global or Workspace scope for UI elements, editor settings, and layout preferences with live preview. Preview version. Development is in progress.",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "icon": "media/edit-sparkle128.png",
   "publisher": "AnnaLopatina",
   "author": {
@@ -34,6 +34,14 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "browser": "./out/extension.js",
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "This extension works in untrusted workspaces and does not require filesystem access."
+    }
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [

@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { SettingsManager } from './SettingsManager';
 import { ELEMENTS } from './ElementRegistry';
 import { ElementDefinition } from './interfaces/ElementDefinition';
@@ -188,20 +186,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private getScriptUri(webview: vscode.Webview): vscode.Uri {
-    const candidates = [
-      ['out', 'webview', 'sidebar.js'],
-      ['webview', 'sidebar.js'],
-      ['src', 'webview', 'sidebar.js'],
-    ];
-    for (const parts of candidates) {
-      const candidate = vscode.Uri.joinPath(this.extensionUri, ...parts);
-      if (fs.existsSync(candidate.fsPath)) {
-        return webview.asWebviewUri(candidate);
-      }
-    }
-    // Fallback to the first path (packaged vs. dev) so URI is still returned
-    const fallback = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview', 'sidebar.js');
-    return webview.asWebviewUri(fallback);
+    return webview.asWebviewUri(
+      vscode.Uri.joinPath(this.extensionUri, 'out', 'webview', 'sidebar.js')
+    );
   }
 
   private generateElementHtml(el: ElementDefinition, idx: number): string {
@@ -232,27 +219,40 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private loadAndReplaceTemplate(cspSource: string, styleSidebarUri: string, itemsHtml: string, scriptUri: string): string {
-    const candidates = [
-      path.join(this.extensionUri.fsPath, 'out', 'webview', 'sidebar.html'),
-      path.join(this.extensionUri.fsPath, 'webview', 'sidebar.html'),
-      path.join(this.extensionUri.fsPath, 'src', 'webview', 'sidebar.html'),
-    ];
-    for (const htmlPath of candidates) {
-      try {
-        if (fs.existsSync(htmlPath)) {
-          const html = fs.readFileSync(htmlPath, 'utf8');
-          return html
-            .replace('{{cspSource}}', cspSource)
-            .replace('{{styleSidebarUri}}', styleSidebarUri)
-            .replace('{{itemsHtml}}', itemsHtml)
-            .replace('{{scriptUri}}', scriptUri);
-        }
-      } catch (err) {
-        console.error('Failed to read sidebar.html at', htmlPath, err);
-      }
-    }
-    console.error('sidebar.html not found in any expected locations:', candidates);
-    return '<main><p>Failed to load sidebar UI.</p></main>';
+    const htmlTemplate = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${cspSource};">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <link href="${styleSidebarUri}" rel="stylesheet">
+          <title>Customize VS Code Appearance</title>
+        </head>
+        <body class="vscode-light">
+          <main>
+            <nav aria-label="Configuration target" class="button-group">
+              <div class="scope-control">
+                <button id="btn-global" type="button" class="config-btn" aria-pressed="false">Global (User)</button>
+                <span class="scope-reset" data-target="Global" title="Reset customizations for elements listed below in the Global (User) scope.">&#x21bb;</span>
+              </div>
+              <div class="scope-control">
+                <button id="btn-workspace" type="button" class="config-btn" aria-pressed="false">Workspace</button>
+                <span class="scope-reset" data-target="Workspace" title="Reset customizations for elements listed below in the Workspace scope.">&#x21bb;</span>
+              </div>
+              <div class="scope-control">
+                <input type="checkbox" id="enableHighlighting" class="checkbox-input" checked>
+                <label for="enableHighlighting">Enable Highlighting</label>
+              </div>
+            </nav>
+            <section aria-label="Color Customizations" class="element-list">
+              ${itemsHtml}
+            </section>
+          </main>
+          <script src="${scriptUri}"><\/script>
+        </body>
+      </html>`;
+    return htmlTemplate;
   }
 
   private getInputHtml(setting: ElementSetting): string {

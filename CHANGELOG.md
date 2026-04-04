@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.12] - 2026-04-04
+
+### Added
+
+- Added extension compatibility with VS Code for the Web.
+
 ## [1.0.11] - 2026-03-31
 
 ### Added
