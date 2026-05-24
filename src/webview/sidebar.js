@@ -448,6 +448,14 @@
         }
         return;
       }
+
+      if (msg.type === 'appSettings') {
+        const enableHighlighting = document.getElementById('enableHighlighting');
+        if (enableHighlighting) {
+          enableHighlighting.checked = !!msg.settings.enableHoverHighlight;
+        }
+        return;
+      }
       
       if (msg.type === 'setTheme') {
         vscode.postMessage({ type: 'consoleLog', message: `Received request to set theme ${msg.theme}` });

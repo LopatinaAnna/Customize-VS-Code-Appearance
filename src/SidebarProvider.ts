@@ -68,6 +68,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     });
   }
 
+  private refreshAppSettings(webviewView: vscode.WebviewView): void {
+    webviewView.webview.postMessage({
+      type: 'appSettings',
+      settings: {
+        enableHoverHighlight: SettingsManager.getAppSettingValue('enableHoverHighlight')
+      }
+    });
+  }
+
   /**
    * Listens for VS Code theme changes and refreshes colors when the theme or visibility changes.
    *
@@ -84,6 +93,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.onDidChangeVisibility(async () => {
       if (webviewView.visible) {
         this.requestFreshThemeColors(webviewView);
+        this.refreshAppSettings(webviewView);
       }
     });
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.21] - 2026-05-24
+
+### Fixed
+
+- Fixed incorrect displaying of Enable Highlighting chekbox state.
+
 ## [1.0.20] - 2026-05-02
 
 ### Added

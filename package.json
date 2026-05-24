@@ -1,8 +1,8 @@
 {
   "name": "customize-vs-code-appearance",
   "displayName": "Customize VS Code Appearance",
-  "description": "Personalize colors in the Global or Workspace/Folder scope for UI elements, editor settings, and layout preferences with live preview.",
-  "version": "1.0.20",
+  "description": "Provides a simple UI for customizing VS Code's colors, allowing to create a custom theme for each workspace or folder, making it quicker to identify open projects and switch between them more easily.",
+  "version": "1.0.21",
   "icon": "media/edit-sparkle128.png",
   "publisher": "AnnaLopatina",
   "author": {
